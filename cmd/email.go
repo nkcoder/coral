@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"coral.daniel-guo.com/internal/clubtransfer"
+	"coral.daniel-guo.com/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -16,10 +16,25 @@ var sendEmailCmd = &cobra.Command{
 This command processes club transfer data from a CSV file and sends 
 personalized emails to each club with their relevant transfer information.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Transfer type: %s, filename: %s, sender: %s, env: %s\n", transferType, input, sender, env)
+		// Set logging level based on verbose flag
+		if verbose {
+			logger.SetLevel(logger.DebugLevel)
+			logger.Debug("Debug logging enabled")
+		}
 
-		if err := clubtransfer.Process(transferType, input, sender, env); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		logger.Info("Transfer type: %s, filename: %s, sender: %s, env: %s",
+			transferType, input, sender, env)
+
+		cfg := clubtransfer.Config{
+			TransferType: transferType,
+			FileName:     input,
+			Sender:       sender,
+			Environment:  env,
+			TestEmail:    testEmail,
+		}
+
+		if err := clubtransfer.Process(cfg); err != nil {
+			logger.Error("Failed to process club transfers: %v", err)
 			os.Exit(1)
 		}
 	},
@@ -30,6 +45,8 @@ var (
 	input        string
 	sender       string
 	env          string
+	testEmail    string
+	verbose      bool
 )
 
 func init() {
@@ -44,4 +61,8 @@ func init() {
 
 	sendEmailCmd.Flags().StringVarP(&env, "env", "e", "", "Environment (dev, staging, prod)")
 	sendEmailCmd.MarkFlagRequired("env")
+
+	sendEmailCmd.Flags().StringVarP(&testEmail, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
+
+	sendEmailCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose debugging output")
 }

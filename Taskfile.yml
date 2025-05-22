@@ -7,23 +7,32 @@ vars:
   SENDER: no-reply@the-hub.ai
   PIF_INPUT: data/pif_club_transfer.csv
   DD_INPUT: data/dd_club_transfer.csv
+  TEST_EMAIL: daniel.guo@vivalabs.com.au
 
 tasks:
   build:
+    desc: Build the application
     cmds:
       - go build -o email-app ./main.go
     silent: true
 
   send-email-pif:
+    desc: Send PIF club transfer emails
     deps:
       - build
     cmds:
-      - ./email-app send-email -e {{.ENV}} -t PIF -i {{.PIF_INPUT}} -s {{.SENDER}}
+      - ./email-app send-email -e {{.ENV}} -t PIF -i {{.PIF_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
     silent: false
 
   send-email-dd:
+    desc: Send DD club transfer emails
     deps:
       - build
     cmds:
-      - ./email-app send-email -e {{.ENV}} -t DD -i {{.DD_INPUT}} -s {{.SENDER}}
+      - ./email-app send-email -e {{.ENV}} -t DD -i {{.DD_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
     silent: false
+
+  help:
+    desc: Display available commands
+    cmds:
+      - ./email-app --help

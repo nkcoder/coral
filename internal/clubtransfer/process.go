@@ -7,34 +7,48 @@ import (
 	"coral.daniel-guo.com/internal/aws"
 	"coral.daniel-guo.com/internal/db"
 	"coral.daniel-guo.com/internal/domain"
+	"coral.daniel-guo.com/internal/logger"
 )
 
+// Config holds the configuration for the club transfer process
+type Config struct {
+	TransferType string
+	FileName     string
+	Sender       string
+	Environment  string
+	TestEmail    string // Email for testing - if set, sends to this address instead of club email
+}
+
 // Process handles the club transfer workflow
-func Process(transferType string, fileName string, sender string, env string) error {
+func Process(cfg Config) error {
 	// Setup database connection pool
-	db, err := db.NewPool(env)
+	db, err := db.NewPool(cfg.Environment)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
 
+	logger.Info("Starting club transfer process for type: %s", cfg.TransferType)
+
 	// Read club transfer data from CSV file
-	data, err := readClubTransferData(fileName)
+	data, err := readClubTransferData(cfg.FileName)
 	if err != nil {
 		return fmt.Errorf("failed to read club transfer data: %w", err)
 	}
+	logger.Info("Successfully read club transfer data from %s", cfg.FileName)
 
 	// Write club transfer data to CSV files for each club
-	if err := writeClubTransferData(data, transferType); err != nil {
+	if err := writeClubTransferData(data, cfg.TransferType); err != nil {
 		return fmt.Errorf("failed to write club transfer data: %w", err)
 	}
+	logger.Info("Successfully wrote club transfer data to individual files")
 
 	// Send emails to clubs
-	if err := sendEmailToClub(data, db, transferType, sender); err != nil {
+	if err := sendEmailToClub(data, db, cfg); err != nil {
 		return fmt.Errorf("failed to send emails to clubs: %w", err)
 	}
 
-	fmt.Println("Club transfer process completed successfully")
+	logger.Info("Club transfer process completed successfully")
 	return nil
 }
 
@@ -98,14 +112,14 @@ func writeClubTransferData(data map[string][]domain.ClubTransferData, transferTy
 }
 
 // sendEmailToClub sends emails to clubs with their transfer data
-func sendEmailToClub(data map[string][]domain.ClubTransferData, db *db.Pool, transferType string, sender string) error {
+func sendEmailToClub(data map[string][]domain.ClubTransferData, db *db.Pool, cfg Config) error {
 	// Get current month and year information for email subject/content
 	now := time.Now()
 	lastMonth := now.AddDate(0, -1, 0).Month().String()
 	currentYear := now.Year()
 
 	var subject, bodyContent string
-	if transferType == "PIF" {
+	if cfg.TransferType == "PIF" {
 		subject = fmt.Sprintf("Club Transfer for Paid in Full Members (%s %d)", lastMonth, currentYear)
 		bodyContent = fmt.Sprintf("Please find attached the Paid in Full club transfer data for your club (%s %d).", lastMonth, currentYear)
 	} else {
@@ -131,40 +145,45 @@ func sendEmailToClub(data map[string][]domain.ClubTransferData, db *db.Pool, tra
 		clubs = append(clubs, club)
 	}
 
-	fmt.Printf("Total: %d clubs\n", len(clubs))
+	logger.Info("Processing %d clubs for email delivery", len(clubs))
 
 	for _, clubName := range clubs {
-		fmt.Printf("Processing club: %s\n", clubName)
+		logger.Debug("Processing club: %s", clubName)
 
 		location, err := locationRepo.FindByName(clubName)
 		if err != nil {
-			fmt.Printf("Error finding location for club %s: %v\n", clubName, err)
+			logger.Warn("Error finding location for club %s: %v", clubName, err)
 			continue
 		}
 
 		if location == nil {
-			fmt.Printf("--- Location not found for club: %s ---\n", clubName)
+			logger.Warn("Location not found for club: %s", clubName)
 			continue
 		}
 
 		if location.Email == "" {
-			fmt.Printf("--- Email not found for club: %s ---\n", clubName)
+			logger.Warn("Email not found for club: %s", clubName)
 			continue
 		}
 
 		email := location.Email
-		fmt.Printf("Location email: %s\n", email)
+		logger.Debug("Location email for %s: %s", clubName, email)
 
-		clubTransferFile := getOutputFileName(transferType, clubName)
+		clubTransferFile := getOutputFileName(cfg.TransferType, clubName)
 
-		// For testing purpose, send to a specific email
-		toDaniel := "daniel.guo@vivalabs.com.au"
-		if err := aws.SendEmailWithAttachment(sender, toDaniel, subject, body, clubTransferFile); err != nil {
-			fmt.Printf("Error sending email for club %s: %v\n", clubName, err)
+		// Determine recipient email
+		recipient := email
+		if cfg.TestEmail != "" {
+			logger.Info("Using test email %s instead of club email %s", cfg.TestEmail, email)
+			recipient = cfg.TestEmail
+		}
+
+		if err := aws.SendEmailWithAttachment(cfg.Sender, recipient, subject, body, clubTransferFile); err != nil {
+			logger.Error("Error sending email for club %s: %v", clubName, err)
 			continue
 		}
 
-		fmt.Printf("Process club: %s completed\n", clubName)
+		logger.Info("Email sent successfully to club: %s", clubName)
 		time.Sleep(1 * time.Second) // Sleep to avoid overwhelming email service
 	}
 
