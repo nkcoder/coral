@@ -22,15 +22,21 @@ type AppConfig struct {
 
 	// Test email (if set, all emails go here)
 	TestEmail string
+
+	// Worker pool configuration
+	WorkerPoolSize int
+	WorkerDelayMs  int
 }
 
 // NewAppConfig creates a new application configuration with default values
 func NewAppConfig(environment string) *AppConfig {
 	return &AppConfig{
-		Environment:   environment,
-		Email:         email.DefaultConfig(),
-		Secrets:       secrets.DefaultConfig(),
-		DefaultSender: "no-reply@the-hub.ai",
+		Environment:    environment,
+		Email:          email.DefaultConfig(),
+		Secrets:        secrets.DefaultConfig(),
+		DefaultSender:  "no-reply@the-hub.ai",
+		WorkerPoolSize: 5,
+		WorkerDelayMs:  1000,
 	}
 }
 

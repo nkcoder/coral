@@ -4,10 +4,10 @@ version: '3'
 
 vars:
   ENV: dev
+  TEST_EMAIL: daniel.guo@vivalabs.com.au
   SENDER: no-reply@the-hub.ai
   PIF_INPUT: data/pif_club_transfer.csv
   DD_INPUT: data/dd_club_transfer.csv
-  TEST_EMAIL: daniel.guo@vivalabs.com.au
 
 tasks:
   build:

@@ -7,6 +7,7 @@ import (
 	"coral.daniel-guo.com/internal/logger"
 	"coral.daniel-guo.com/internal/service"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // sendEmailCmd represents the send-email command for sending club transfer emails
@@ -23,10 +24,15 @@ personalized emails to each club with their relevant transfer information.`,
 			logger.Debug("Debug logging enabled")
 		}
 
-		logger.Info("Transfer type: %s, filename: %s, sender: %s, env: %s", transferType, input, sender, env)
+		// Get configuration values from command line flags
+		transferType := viper.GetString("transfer.type")
+		input := viper.GetString("transfer.input")
 
-		// Create app configuration
-		appConfig := config.NewAppConfig(env).WithSender(sender).WithTestEmail(testEmail)
+		logger.Info("Transfer type: %s, filename: %s, env: %s",
+			transferType, input, viper.GetString("env"))
+
+		// Load application configuration
+		appConfig := config.LoadConfig()
 
 		// Create transfer service
 		transferService := service.NewService(appConfig)
@@ -45,29 +51,26 @@ personalized emails to each club with their relevant transfer information.`,
 	},
 }
 
-var (
-	transferType string
-	input        string
-	sender       string
-	env          string
-	testEmail    string
-	verbose      bool
-)
+var verbose bool
 
 func init() {
-	sendEmailCmd.Flags().StringVarP(&transferType, "type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
+	// Define command-line flags with viper bindings
+	sendEmailCmd.Flags().StringP("type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
+	viper.BindPFlag("transfer.type", sendEmailCmd.Flags().Lookup("type"))
 	sendEmailCmd.MarkFlagRequired("type")
 
-	sendEmailCmd.Flags().StringVarP(&input, "input", "i", "", "CSV input file with transfer data")
+	sendEmailCmd.Flags().StringP("input", "i", "", "CSV input file with transfer data")
+	viper.BindPFlag("transfer.input", sendEmailCmd.Flags().Lookup("input"))
 	sendEmailCmd.MarkFlagRequired("input")
 
-	sendEmailCmd.Flags().StringVarP(&sender, "sender", "s", "", "Sender email address")
-	sendEmailCmd.MarkFlagRequired("sender")
+	sendEmailCmd.Flags().StringP("sender", "s", "", "Sender email address")
+	viper.BindPFlag("email.sender", sendEmailCmd.Flags().Lookup("sender"))
 
-	sendEmailCmd.Flags().StringVarP(&env, "env", "e", "", "Environment (dev, staging, prod)")
-	sendEmailCmd.MarkFlagRequired("env")
+	sendEmailCmd.Flags().StringP("env", "e", "", "Environment (dev, staging, prod)")
+	viper.BindPFlag("env", sendEmailCmd.Flags().Lookup("env"))
 
-	sendEmailCmd.Flags().StringVarP(&testEmail, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
+	sendEmailCmd.Flags().String("test-email", "", "Test email address (if set, all emails go here instead of to clubs)")
+	viper.BindPFlag("email.test", sendEmailCmd.Flags().Lookup("test-email"))
 
 	sendEmailCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose debugging output")
 }

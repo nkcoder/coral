@@ -129,8 +129,10 @@ func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db 
 
 	logger.Info("Processing %d clubs for email delivery", len(clubs))
 
-	// Use a limited number of workers to avoid overwhelming systems
-	maxWorkers := 5
+	// Get configuration from Viper via the AppConfig
+	maxWorkers := s.config.WorkerPoolSize
+	delayMs := s.config.WorkerDelayMs
+
 	if len(clubs) < maxWorkers {
 		maxWorkers = len(clubs)
 	}
@@ -152,8 +154,8 @@ func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db 
 			for clubName := range jobs {
 				err := s.sendEmail(clubName, data, transferType, locationRepo)
 				results <- result{clubName: clubName, err: err}
-				// Sleep to avoid overwhelming email service, but now centralized per worker
-				time.Sleep(1 * time.Second)
+				// Sleep to avoid overwhelming email service
+				time.Sleep(time.Duration(delayMs) * time.Millisecond)
 			}
 		}()
 	}
