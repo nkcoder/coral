@@ -3,8 +3,9 @@ package cmd
 import (
 	"os"
 
-	"coral.daniel-guo.com/internal/clubtransfer"
+	"coral.daniel-guo.com/internal/config"
 	"coral.daniel-guo.com/internal/logger"
+	"coral.daniel-guo.com/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -25,15 +26,22 @@ personalized emails to each club with their relevant transfer information.`,
 		logger.Info("Transfer type: %s, filename: %s, sender: %s, env: %s",
 			transferType, input, sender, env)
 
-		cfg := clubtransfer.Config{
+		// Create app configuration
+		appConfig := config.NewAppConfig(env).
+			WithSender(sender).
+			WithTestEmail(testEmail)
+
+		// Create transfer service
+		transferService := service.NewService(appConfig)
+
+		// Create transfer request
+		req := service.TransferRequest{
 			TransferType: transferType,
 			FileName:     input,
-			Sender:       sender,
-			Environment:  env,
-			TestEmail:    testEmail,
 		}
 
-		if err := clubtransfer.Process(cfg); err != nil {
+		// Process the request
+		if err := transferService.Process(req); err != nil {
 			logger.Error("Failed to process club transfers: %v", err)
 			os.Exit(1)
 		}
