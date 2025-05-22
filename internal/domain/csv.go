@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -114,4 +115,51 @@ func WriteClubTransferCSV(fileName string, data []ClubTransferData) error {
 	}
 
 	return nil
+}
+
+// GenerateCSVContent generates CSV content in memory as []byte
+func GenerateCSVContent(data []ClubTransferData) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+
+	headers := []string{
+		"Member Id",
+		"Fob Number",
+		"First Name",
+		"Last Name",
+		"Membership Type",
+		"Home Club",
+		"Target Club",
+		"Transfer Type",
+		"Transfer Date",
+	}
+
+	if err := writer.Write(headers); err != nil {
+		return nil, fmt.Errorf("failed to write headers: %w", err)
+	}
+
+	for _, transfer := range data {
+		record := []string{
+			transfer.MemberID,
+			transfer.FobNumber,
+			transfer.FirstName,
+			transfer.LastName,
+			transfer.MembershipType,
+			transfer.HomeClub,
+			transfer.TargetClub,
+			transfer.TransferType,
+			transfer.TransferDate.Format("2006-01-02"),
+		}
+
+		if err := writer.Write(record); err != nil {
+			return nil, fmt.Errorf("failed to write record: %w", err)
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, fmt.Errorf("error flushing csv writer: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }

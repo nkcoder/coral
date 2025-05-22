@@ -37,12 +37,6 @@ func Process(cfg Config) error {
 	}
 	logger.Info("Successfully read club transfer data from %s", cfg.FileName)
 
-	// Write club transfer data to CSV files for each club
-	if err := writeClubTransferData(data, cfg.TransferType); err != nil {
-		return fmt.Errorf("failed to write club transfer data: %w", err)
-	}
-	logger.Info("Successfully wrote club transfer data to individual files")
-
 	// Send emails to clubs
 	if err := sendEmailToClub(data, db, cfg); err != nil {
 		return fmt.Errorf("failed to send emails to clubs: %w", err)
@@ -98,17 +92,6 @@ func getOutputFileName(transferType, clubName string) string {
 		return fmt.Sprintf("dd_club_transfer_%s.csv", clubName)
 	}
 	return fmt.Sprintf("pif_club_transfer_%s.csv", clubName)
-}
-
-// writeClubTransferData writes club transfer data to CSV files for each club
-func writeClubTransferData(data map[string][]domain.ClubTransferData, transferType string) error {
-	for club, transfers := range data {
-		clubFileName := getOutputFileName(transferType, club)
-		if err := domain.WriteClubTransferCSV(clubFileName, transfers); err != nil {
-			return fmt.Errorf("error writing club transfer data for %s: %w", club, err)
-		}
-	}
-	return nil
 }
 
 // sendEmailToClub sends emails to clubs with their transfer data
@@ -169,7 +152,15 @@ func sendEmailToClub(data map[string][]domain.ClubTransferData, db *db.Pool, cfg
 		email := location.Email
 		logger.Debug("Location email for %s: %s", clubName, email)
 
-		clubTransferFile := getOutputFileName(cfg.TransferType, clubName)
+		// Generate CSV content in memory
+		csvContent, err := domain.GenerateCSVContent(data[clubName])
+		if err != nil {
+			logger.Error("Error generating CSV content for club %s: %v", clubName, err)
+			continue
+		}
+
+		// Get attachment filename
+		attachmentName := getOutputFileName(cfg.TransferType, clubName)
 
 		// Determine recipient email
 		recipient := email
@@ -178,7 +169,8 @@ func sendEmailToClub(data map[string][]domain.ClubTransferData, db *db.Pool, cfg
 			recipient = cfg.TestEmail
 		}
 
-		if err := aws.SendEmailWithAttachment(cfg.Sender, recipient, subject, body, clubTransferFile); err != nil {
+		// Send email with in-memory attachment
+		if err := aws.SendEmailWithAttachmentContent(cfg.Sender, recipient, subject, body, attachmentName, csvContent); err != nil {
 			logger.Error("Error sending email for club %s: %v", clubName, err)
 			continue
 		}
