@@ -3,6 +3,7 @@ package service
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"coral.daniel-guo.com/internal/config"
@@ -118,6 +119,72 @@ func (s *Service) getOutputFileName(transferType, clubName string) string {
 
 // sendEmailToClubs sends emails to clubs with their transfer data
 func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db *repository.Pool, transferType string) error {
+	// Create location repository
+	locationRepo := repository.NewLocationRepository(db)
+
+	clubs := make([]string, 0, len(data))
+	for club := range data {
+		clubs = append(clubs, club)
+	}
+
+	logger.Info("Processing %d clubs for email delivery", len(clubs))
+
+	// Use a limited number of workers to avoid overwhelming systems
+	maxWorkers := 5
+	if len(clubs) < maxWorkers {
+		maxWorkers = len(clubs)
+	}
+
+	// Create channels for work distribution and error collection
+	type result struct {
+		clubName string
+		err      error
+	}
+	jobs := make(chan string, len(clubs))
+	results := make(chan result, len(clubs))
+
+	// Start worker pool
+	wg := sync.WaitGroup{}
+	wg.Add(maxWorkers)
+	for i := 0; i < maxWorkers; i++ {
+		go func() {
+			defer wg.Done()
+			for clubName := range jobs {
+				err := s.sendEmail(clubName, data, transferType, locationRepo)
+				results <- result{clubName: clubName, err: err}
+				// Sleep to avoid overwhelming email service, but now centralized per worker
+				time.Sleep(1 * time.Second)
+			}
+		}()
+	}
+
+	// Send jobs to workers
+	for _, clubName := range clubs {
+		jobs <- clubName
+	}
+	close(jobs)
+
+	// Wait for all workers to complete
+	wg.Wait()
+	close(results)
+
+	// Collect and handle errors
+	var failedClubs []string
+	for res := range results {
+		if res.err != nil {
+			logger.Error("Failed to send email to club %s: %v", res.clubName, res.err)
+			failedClubs = append(failedClubs, res.clubName)
+		}
+	}
+
+	if len(failedClubs) > 0 {
+		return fmt.Errorf("failed to send emails to %d clubs: %v", len(failedClubs), failedClubs)
+	}
+
+	return nil
+}
+
+func (s *Service) sendEmail(clubName string, data map[string][]model.ClubTransferData, transferType string, locationRepo *repository.LocationRepository) error {
 	// Get current month and year information for email subject/content
 	now := time.Now()
 	lastMonth := now.AddDate(0, -1, 0).Month().String()
@@ -142,70 +209,56 @@ func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db 
 		</html>
   `, bodyContent)
 
-	// Create location repository
-	locationRepo := repository.NewLocationRepository(db)
+	logger.Debug("Processing club: %s", clubName)
 
-	clubs := make([]string, 0, len(data))
-	for club := range data {
-		clubs = append(clubs, club)
+	location, err := locationRepo.FindByName(clubName)
+	if err != nil {
+		logger.Warn("Error finding location for club %s: %v", clubName, err)
+		return fmt.Errorf("club %s: error finding location: %w", clubName, err)
 	}
 
-	logger.Info("Processing %d clubs for email delivery", len(clubs))
-
-	for _, clubName := range clubs {
-		logger.Debug("Processing club: %s", clubName)
-
-		location, err := locationRepo.FindByName(clubName)
-		if err != nil {
-			logger.Warn("Error finding location for club %s: %v", clubName, err)
-			continue
-		}
-
-		if location == nil {
-			logger.Warn("Location not found for club: %s", clubName)
-			continue
-		}
-
-		if location.Email == "" {
-			logger.Warn("Email not found for club: %s", clubName)
-			continue
-		}
-
-		recipientEmail := location.Email
-		logger.Debug("Location email for %s: %s", clubName, recipientEmail)
-
-		// Generate CSV content in memory
-		csvContent, err := csvutil.GenerateCSVContent(data[clubName])
-		if err != nil {
-			logger.Error("Error generating CSV content for club %s: %v", clubName, err)
-			continue
-		}
-
-		// Get attachment filename
-		attachmentName := s.getOutputFileName(transferType, clubName)
-
-		// Determine recipient email
-		if s.config.TestEmail != "" {
-			logger.Info("Using test email %s instead of club email %s", s.config.TestEmail, recipientEmail)
-			recipientEmail = s.config.TestEmail
-		}
-
-		// Send email with in-memory attachment
-		if err := s.emailSender.SendWithAttachment(
-			s.config.DefaultSender,
-			recipientEmail,
-			subject,
-			body,
-			attachmentName,
-			csvContent,
-		); err != nil {
-			logger.Error("Error sending email for club %s: %v", clubName, err)
-			continue
-		}
-
-		logger.Info("Email sent successfully to club: %s", clubName)
-		time.Sleep(1 * time.Second) // Sleep to avoid overwhelming email service
+	if location == nil {
+		logger.Warn("Location not found for club: %s", clubName)
+		return fmt.Errorf("club %s: location not found", clubName)
 	}
 
+	if location.Email == "" {
+		logger.Warn("Email not found for club: %s", clubName)
+		return fmt.Errorf("club %s: email not found", clubName)
+	}
+
+	recipientEmail := location.Email
+	logger.Debug("Location email for %s: %s", clubName, recipientEmail)
+
+	// Generate CSV content in memory
+	csvContent, err := csvutil.GenerateCSVContent(data[clubName])
+	if err != nil {
+		logger.Error("Error generating CSV content for club %s: %v", clubName, err)
+		return fmt.Errorf("club %s: error generating CSV content: %w", clubName, err)
+	}
+
+	// Get attachment filename
+	attachmentName := s.getOutputFileName(transferType, clubName)
+
+	// Determine recipient email
+	if s.config.TestEmail != "" {
+		logger.Info("Using test email %s instead of club email %s", s.config.TestEmail, recipientEmail)
+		recipientEmail = s.config.TestEmail
+	}
+
+	// Send email with in-memory attachment
+	if err := s.emailSender.SendWithAttachment(
+		s.config.DefaultSender,
+		recipientEmail,
+		subject,
+		body,
+		attachmentName,
+		csvContent,
+	); err != nil {
+		logger.Error("Error sending email for club %s: %v", clubName, err)
+		return fmt.Errorf("club %s: failed to send email: %w", clubName, err)
+	}
+
+	logger.Info("Email sent successfully to club: %s", clubName)
 	return nil
 }

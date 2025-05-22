@@ -23,13 +23,10 @@ personalized emails to each club with their relevant transfer information.`,
 			logger.Debug("Debug logging enabled")
 		}
 
-		logger.Info("Transfer type: %s, filename: %s, sender: %s, env: %s",
-			transferType, input, sender, env)
+		logger.Info("Transfer type: %s, filename: %s, sender: %s, env: %s", transferType, input, sender, env)
 
 		// Create app configuration
-		appConfig := config.NewAppConfig(env).
-			WithSender(sender).
-			WithTestEmail(testEmail)
+		appConfig := config.NewAppConfig(env).WithSender(sender).WithTestEmail(testEmail)
 
 		// Create transfer service
 		transferService := service.NewService(appConfig)
