@@ -2,7 +2,6 @@ package clubtransfer
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"coral.daniel-guo.com/internal/aws"
@@ -10,31 +9,33 @@ import (
 	"coral.daniel-guo.com/internal/domain"
 )
 
-func Process(transferType string, fileName string, sender string, env string) {
+// Process handles the club transfer workflow
+func Process(transferType string, fileName string, sender string, env string) error {
 	// Setup database connection pool
 	db, err := db.NewPool(env)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
 
 	// Read club transfer data from CSV file
 	data, err := readClubTransferData(fileName)
 	if err != nil {
-		log.Fatalf("Failed to read club transfer data: %v", err)
+		return fmt.Errorf("failed to read club transfer data: %w", err)
 	}
 
 	// Write club transfer data to CSV files for each club
 	if err := writeClubTransferData(data, transferType); err != nil {
-		log.Fatalf("Failed to write club transfer data: %v", err)
+		return fmt.Errorf("failed to write club transfer data: %w", err)
 	}
 
 	// Send emails to clubs
 	if err := sendEmailToClub(data, db, transferType, sender); err != nil {
-		log.Fatalf("Failed to send emails to clubs: %v", err)
+		return fmt.Errorf("failed to send emails to clubs: %w", err)
 	}
 
 	fmt.Println("Club transfer process completed successfully")
+	return nil
 }
 
 // readClubTransferData reads the club transfer data from the CSV file based on payment type
@@ -48,7 +49,7 @@ func readClubTransferData(fileName string) (map[string][]domain.ClubTransferData
 	transfers := make(map[string][]domain.ClubTransferData)
 	for _, row := range clubTransferRows {
 		transferIn := domain.ClubTransferData{
-			MemberId:       row.MemberId,
+			MemberID:       row.MemberID,
 			FobNumber:      row.FobNumber,
 			FirstName:      row.FirstName,
 			LastName:       row.LastName,
