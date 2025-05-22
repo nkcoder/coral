@@ -22,7 +22,7 @@ func (r *LocationRepository) FindByName(name string) (*Location, error) {
 
 	query := `
 		SELECT id, name, email
-		FROM locations
+		FROM location
 		WHERE TRIM(name) = $1
 	`
 

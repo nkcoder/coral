@@ -31,7 +31,7 @@ func ReadClubTransferCSV(fileName string) ([]ClubTransferRow, error) {
 	}
 
 	requiredCols := []string{
-		"Member ID",
+		"Member Id",
 		"Fob Number",
 		"First Name",
 		"Last Name",
@@ -53,7 +53,7 @@ func ReadClubTransferCSV(fileName string) ([]ClubTransferRow, error) {
 		}
 
 		row := ClubTransferRow{
-			MemberID:       record[colMap["Member ID"]],
+			MemberId:       record[colMap["Member Id"]],
 			FobNumber:      record[colMap["Fob Number"]],
 			FirstName:      record[colMap["First Name"]],
 			LastName:       record[colMap["Last Name"]],
@@ -80,7 +80,7 @@ func WriteClubTransferCSV(fileName string, data []ClubTransferData) error {
 	defer writer.Flush()
 
 	headers := []string{
-		"Member ID",
+		"Member Id",
 		"Fob Number",
 		"First Name",
 		"Last Name",
@@ -97,7 +97,7 @@ func WriteClubTransferCSV(fileName string, data []ClubTransferData) error {
 
 	for _, transfer := range data {
 		record := []string{
-			transfer.MemberID,
+			transfer.MemberId,
 			transfer.FobNumber,
 			transfer.FirstName,
 			transfer.LastName,

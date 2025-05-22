@@ -1,0 +1,29 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  ENV: dev
+  SENDER: no-reply@the-hub.ai
+  PIF_INPUT: data/pif_club_transfer.csv
+  DD_INPUT: data/dd_club_transfer.csv
+
+tasks:
+  build:
+    cmds:
+      - go build -o email-app ./main.go
+    silent: true
+
+  send-email-pif:
+    deps:
+      - build
+    cmds:
+      - ./email-app send-email -e {{.ENV}} -t PIF -i {{.PIF_INPUT}} -s {{.SENDER}}
+    silent: false
+
+  send-email-dd:
+    deps:
+      - build
+    cmds:
+      - ./email-app send-email -e {{.ENV}} -t DD -i {{.DD_INPUT}} -s {{.SENDER}}
+    silent: false

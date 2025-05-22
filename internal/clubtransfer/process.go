@@ -6,19 +6,13 @@ import (
 	"time"
 
 	"coral.daniel-guo.com/internal/aws"
-	"coral.daniel-guo.com/internal/config"
 	"coral.daniel-guo.com/internal/db"
 	"coral.daniel-guo.com/internal/domain"
 )
 
 func Process(transferType string, fileName string, sender string, env string) {
-	dbConfig, err := config.LoadDBConfig(env)
-	if err != nil {
-		log.Fatalf("Failed to load database configuration: %v", err)
-	}
-
 	// Setup database connection pool
-	db, err := db.NewPool(dbConfig)
+	db, err := db.NewPool(env)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -54,7 +48,7 @@ func readClubTransferData(fileName string) (map[string][]domain.ClubTransferData
 	transfers := make(map[string][]domain.ClubTransferData)
 	for _, row := range clubTransferRows {
 		transferIn := domain.ClubTransferData{
-			MemberID:       row.MemberID,
+			MemberId:       row.MemberId,
 			FobNumber:      row.FobNumber,
 			FirstName:      row.FirstName,
 			LastName:       row.LastName,

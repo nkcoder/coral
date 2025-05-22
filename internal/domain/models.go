@@ -9,7 +9,7 @@ type Location struct {
 }
 
 type ClubTransferRow struct {
-	MemberID       string
+	MemberId       string
 	FobNumber      string
 	FirstName      string
 	LastName       string
@@ -19,7 +19,7 @@ type ClubTransferRow struct {
 }
 
 type ClubTransferData struct {
-	MemberID       string
+	MemberId       string
 	FobNumber      string
 	FirstName      string
 	LastName       string
