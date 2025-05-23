@@ -56,7 +56,10 @@ func (s *Sender) SendWithAttachmentFile(sender, recipient, subject, body, attach
 }
 
 // SendWithAttachment sends an email with an in-memory attachment
-func (s *Sender) SendWithAttachment(sender, recipient, subject, body, attachmentName string, attachmentContent []byte) error {
+func (s *Sender) SendWithAttachment(
+	sender, recipient, subject, body, attachmentName string,
+	attachmentContent []byte,
+) error {
 	// Create a buffer for the message
 	var buf bytes.Buffer
 
@@ -117,7 +120,9 @@ func (s *Sender) SendWithAttachment(sender, recipient, subject, body, attachment
 	if err != nil {
 		return fmt.Errorf("failed to encode attachment: %w", err)
 	}
-	encoder.Close()
+	if err := encoder.Close(); err != nil {
+		return fmt.Errorf("failed to close encoder: %w", err)
+	}
 	buf.WriteString("\r\n")
 
 	// Close the multipart message

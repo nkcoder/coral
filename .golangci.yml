@@ -1,0 +1,27 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  issues-exit-code: 1
+  go: "1.24"
+  concurrency: 0
+
+linters:
+  default: standard
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+    - golines
+  settings:
+    golines:
+      max-len: 120
+      tab-len: 2
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 10
+  

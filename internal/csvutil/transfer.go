@@ -17,7 +17,12 @@ func ReadClubTransferCSV(fileName string) ([]model.ClubTransferRow, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil {
+			// Log the error, but don't override the main error
+			fmt.Fprintf(os.Stderr, "failed to close file: %v\n", cerr)
+		}
+	}()
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()

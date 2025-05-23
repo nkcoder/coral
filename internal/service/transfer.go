@@ -118,7 +118,11 @@ func (s *Service) getOutputFileName(transferType, clubName string) string {
 }
 
 // sendEmailToClubs sends emails to clubs with their transfer data
-func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db *repository.Pool, transferType string) error {
+func (s *Service) sendEmailToClubs(
+	data map[string][]model.ClubTransferData,
+	db *repository.Pool,
+	transferType string,
+) error {
 	// Create location repository
 	locationRepo := repository.NewLocationRepository(db)
 
@@ -186,7 +190,12 @@ func (s *Service) sendEmailToClubs(data map[string][]model.ClubTransferData, db 
 	return nil
 }
 
-func (s *Service) sendEmail(clubName string, data map[string][]model.ClubTransferData, transferType string, locationRepo *repository.LocationRepository) error {
+func (s *Service) sendEmail(
+	clubName string,
+	data map[string][]model.ClubTransferData,
+	transferType string,
+	locationRepo repository.LocationRepositoryInterface,
+) error {
 	// Get current month and year information for email subject/content
 	now := time.Now()
 	lastMonth := now.AddDate(0, -1, 0).Month().String()
@@ -195,7 +204,11 @@ func (s *Service) sendEmail(clubName string, data map[string][]model.ClubTransfe
 	var subject, bodyContent string
 	if transferType == "PIF" {
 		subject = fmt.Sprintf("Club Transfer for Paid in Full Members (%s %d)", lastMonth, currentYear)
-		bodyContent = fmt.Sprintf("Please find attached the Paid in Full club transfer data for your club (%s %d).", lastMonth, currentYear)
+		bodyContent = fmt.Sprintf(
+			"Please find attached the Paid in Full club transfer data for your club (%s %d).",
+			lastMonth,
+			currentYear,
+		)
 	} else {
 		lastQuarter := now.AddDate(0, -3, 0).Month().String()
 		subject = fmt.Sprintf("Club Transfer for Direct Debit Members (%s - %s %d)", lastQuarter, lastMonth, currentYear)

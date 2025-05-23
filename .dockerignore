@@ -1,0 +1,38 @@
+# Git files
+.git/
+.gitignore
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+
+# Build artifacts
+email-app
+email-app-linux
+email-app.exe
+
+# Documentation
+*.md
+LICENSE
+
+# CI/CD
+.github/
+.golangci.yml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Mac files
+.DS_Store
+
+# Test data (sensitive)
+data/*.csv
+
+# Temporary files
+tmp/
+temp/ 

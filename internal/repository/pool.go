@@ -51,7 +51,7 @@ func NewPool(cfg PoolConfig) (*Pool, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	logger.Info("Successfully connected to database at %s:%d/%s", config.Host, config.Port, config.DBName)
+	logger.Info("Successfully connected to database at %s:%d/%s\n", config.Host, config.Port, config.DBName)
 	return &Pool{pool: dbPool}, nil
 }
 

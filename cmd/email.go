@@ -56,12 +56,24 @@ var verbose bool
 func init() {
 	// Define command-line flags with viper bindings
 	sendEmailCmd.Flags().StringP("type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
-	viper.BindPFlag("transfer.type", sendEmailCmd.Flags().Lookup("type"))
-	sendEmailCmd.MarkFlagRequired("type")
+	if err := viper.BindPFlag("transfer.type", sendEmailCmd.Flags().Lookup("type")); err != nil {
+		logger.Error("Failed to bind flag 'type': %v", err)
+		os.Exit(1)
+	}
+	if err := sendEmailCmd.MarkFlagRequired("type"); err != nil {
+		logger.Error("Failed to mark flag 'type' as required: %v", err)
+		os.Exit(1)
+	}
 
 	sendEmailCmd.Flags().StringP("input", "i", "", "CSV input file with transfer data")
-	viper.BindPFlag("transfer.input", sendEmailCmd.Flags().Lookup("input"))
-	sendEmailCmd.MarkFlagRequired("input")
+	if err := viper.BindPFlag("transfer.input", sendEmailCmd.Flags().Lookup("input")); err != nil {
+		logger.Error("Failed to bind flag 'input': %v", err)
+		os.Exit(1)
+	}
+	if err := sendEmailCmd.MarkFlagRequired("input"); err != nil {
+		logger.Error("Failed to mark flag 'input' as required: %v", err)
+		os.Exit(1)
+	}
 
 	sendEmailCmd.Flags().StringP("sender", "s", "", "Sender email address")
 	viper.BindPFlag("email.sender", sendEmailCmd.Flags().Lookup("sender"))
