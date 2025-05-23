@@ -76,13 +76,22 @@ func init() {
 	}
 
 	sendEmailCmd.Flags().StringP("sender", "s", "", "Sender email address")
-	viper.BindPFlag("email.sender", sendEmailCmd.Flags().Lookup("sender"))
+	if err := viper.BindPFlag("email.sender", sendEmailCmd.Flags().Lookup("sender")); err != nil {
+		logger.Error("Failed to bind flag 'sender': %v", err)
+		os.Exit(1)
+	}
 
 	sendEmailCmd.Flags().StringP("env", "e", "", "Environment (dev, staging, prod)")
-	viper.BindPFlag("env", sendEmailCmd.Flags().Lookup("env"))
+	if err := viper.BindPFlag("env", sendEmailCmd.Flags().Lookup("env")); err != nil {
+		logger.Error("Failed to bind flag 'env': %v", err)
+		os.Exit(1)
+	}
 
 	sendEmailCmd.Flags().String("test-email", "", "Test email address (if set, all emails go here instead of to clubs)")
-	viper.BindPFlag("email.test", sendEmailCmd.Flags().Lookup("test-email"))
+	if err := viper.BindPFlag("email.test", sendEmailCmd.Flags().Lookup("test-email")); err != nil {
+		logger.Error("Failed to bind flag 'test-email': %v", err)
+		os.Exit(1)
+	}
 
 	sendEmailCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose debugging output")
 }

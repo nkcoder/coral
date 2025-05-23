@@ -39,7 +39,10 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
-	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
+	if err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")); err != nil {
+		logger.Error("Failed to bind flag 'config': %v", err)
+		os.Exit(1)
+	}
 
 	rootCmd.AddCommand(sendEmailCmd)
 }

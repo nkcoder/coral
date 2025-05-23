@@ -6,12 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.23, 1.24]
 
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: stable
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -42,13 +43,10 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
-      - name: Run go vet
-        run: go vet ./...
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.1
 
   build:
     runs-on: ubuntu-latest
@@ -60,7 +58,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: stable
 
       - name: Build application
         run: go build -v ./...
@@ -71,5 +69,5 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: email-app
+          name: email-app-go
           path: email-app
