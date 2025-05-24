@@ -71,13 +71,17 @@
 				
 				<option value="file7">coral.daniel-guo.com/internal/repository/pool.go (0.0%)</option>
 				
-				<option value="file8">coral.daniel-guo.com/internal/secrets/manager.go (0.0%)</option>
+				<option value="file8">coral.daniel-guo.com/internal/secrets/interfaces.go (0.0%)</option>
 				
-				<option value="file9">coral.daniel-guo.com/internal/service/transfer.go (45.2%)</option>
+				<option value="file9">coral.daniel-guo.com/internal/secrets/manager.go (13.3%)</option>
 				
-				<option value="file10">coral.daniel-guo.com/internal/testutil/helpers.go (0.0%)</option>
+				<option value="file10">coral.daniel-guo.com/internal/secrets/testable_manager.go (89.5%)</option>
 				
-				<option value="file11">coral.daniel-guo.com/main.go (0.0%)</option>
+				<option value="file11">coral.daniel-guo.com/internal/service/transfer.go (45.2%)</option>
+				
+				<option value="file12">coral.daniel-guo.com/internal/testutil/helpers.go (0.0%)</option>
+				
+				<option value="file13">coral.daniel-guo.com/main.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -787,7 +791,36 @@ func loadDBConfig(env string, secretsManager *secrets.Manager) (*DBConfig, error
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">// Package secrets provides access to secure configuration values
+		<pre class="file" id="file8" style="display: none">package secrets
+
+import (
+        "github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/aws/session"
+        "github.com/aws/aws-sdk-go/service/secretsmanager"
+)
+
+// SecretsManagerAPI defines the interface for AWS Secrets Manager operations
+// This interface allows for mocking in tests
+type SecretsManagerAPI interface {
+        GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
+}
+
+// SessionCreator defines the interface for creating AWS sessions
+// This interface allows for mocking session creation in tests
+type SessionCreator interface {
+        NewSession(config *aws.Config) (*session.Session, error)
+}
+
+// DefaultSessionCreator implements SessionCreator using the real AWS SDK
+type DefaultSessionCreator struct{}
+
+// NewSession creates a new AWS session using the real AWS SDK
+func (d *DefaultSessionCreator) NewSession(config *aws.Config) (*session.Session, error) <span class="cov0" title="0">{
+        return session.NewSession(config)
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Package secrets provides access to secure configuration values
 package secrets
 
 import (
@@ -805,7 +838,7 @@ type Config struct {
 }
 
 // DefaultConfig returns a default secrets configuration
-func DefaultConfig() Config <span class="cov0" title="0">{
+func DefaultConfig() Config <span class="cov8" title="1">{
         return Config{
                 Region: "ap-southeast-2",
         }
@@ -817,7 +850,7 @@ type Manager struct {
 }
 
 // NewManager creates a new secrets manager with the given configuration
-func NewManager(config Config) *Manager <span class="cov0" title="0">{
+func NewManager(config Config) *Manager <span class="cov8" title="1">{
         return &amp;Manager{
                 config: config,
         }
@@ -859,7 +892,81 @@ func (m *Manager) GetSecret(secretName string) (string, error) <span class="cov0
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">// Package transfer provides club transfer functionality
+		<pre class="file" id="file10" style="display: none">package secrets
+
+import (
+        "fmt"
+
+        "coral.daniel-guo.com/internal/logger"
+        "github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/service/secretsmanager"
+)
+
+// TestableManager is a version of Manager that accepts dependencies for easier testing
+type TestableManager struct {
+        config         Config
+        sessionCreator SessionCreator
+        clientFactory  func(*aws.Config) SecretsManagerAPI
+}
+
+// NewTestableManager creates a new testable secrets manager with dependency injection
+func NewTestableManager(config Config, sessionCreator SessionCreator, clientFactory func(*aws.Config) SecretsManagerAPI) *TestableManager <span class="cov8" title="1">{
+        if sessionCreator == nil </span><span class="cov8" title="1">{
+                sessionCreator = &amp;DefaultSessionCreator{}
+        }</span>
+        <span class="cov8" title="1">if clientFactory == nil </span><span class="cov8" title="1">{
+                clientFactory = func(cfg *aws.Config) SecretsManagerAPI </span><span class="cov0" title="0">{
+                        sess, _ := sessionCreator.NewSession(cfg)
+                        return secretsmanager.New(sess)
+                }</span>
+        }
+
+        <span class="cov8" title="1">return &amp;TestableManager{
+                config:         config,
+                sessionCreator: sessionCreator,
+                clientFactory:  clientFactory,
+        }</span>
+}
+
+// NewTestableManagerWithDefaults creates a testable manager with default dependencies
+func NewTestableManagerWithDefaults(config Config) *TestableManager <span class="cov8" title="1">{
+        return NewTestableManager(config, nil, nil)
+}</span>
+
+// GetSecret gets a secret from AWS Secrets Manager using the injected dependencies
+func (m *TestableManager) GetSecret(secretName string) (string, error) <span class="cov8" title="1">{
+        logger.Info("Getting secret: %s", secretName)
+
+        // Create AWS config
+        awsConfig := &amp;aws.Config{
+                Region: aws.String(m.config.Region),
+        }
+
+        // Create client using the factory
+        client := m.clientFactory(awsConfig)
+
+        // Create a request to get the secret value
+        input := &amp;secretsmanager.GetSecretValueInput{
+                SecretId: aws.String(secretName),
+        }
+
+        // Get the secret value
+        result, err := client.GetSecretValue(input)
+        if err != nil </span><span class="cov8" title="1">{
+                return "", fmt.Errorf("failed to get secret: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if result.SecretString == nil </span><span class="cov8" title="1">{
+                return "", fmt.Errorf("secret value is nil")
+        }</span>
+
+        <span class="cov8" title="1">secretString := *result.SecretString
+
+        return secretString, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">// Package transfer provides club transfer functionality
 package service
 
 import (
@@ -1139,7 +1246,7 @@ func (s *Service) sendEmail(
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">// Package testutil provides testing utilities and helpers
+		<pre class="file" id="file12" style="display: none">// Package testutil provides testing utilities and helpers
 package testutil
 
 import (
@@ -1251,7 +1358,7 @@ const InvalidCSVContent = `Member Id,First Name,Last Name
 const EmptyCSVContent = ``
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">/*
+		<pre class="file" id="file13" style="display: none">/*
 Copyright © 2025 NAME HERE &lt;EMAIL ADDRESS&gt;
 
 */
