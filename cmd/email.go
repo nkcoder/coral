@@ -56,14 +56,16 @@ var (
 )
 
 func init() {
-	sendEmailCmd.Flags().StringVarP(&typeFlag, "type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
+	sendEmailCmd.Flags().
+		StringVarP(&typeFlag, "type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
 
 	sendEmailCmd.Flags().StringVarP(&inputFlag, "input", "i", "", "CSV input file with transfer data")
 
 	sendEmailCmd.Flags().StringVarP(&senderFlag, "sender", "s", "", "Sender email address")
 	sendEmailCmd.Flags().StringVarP(&envFlag, "env", "e", "", "Environment (dev, staging, prod)")
 
-	sendEmailCmd.Flags().StringVarP(&testEmailFlag, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
+	sendEmailCmd.Flags().
+		StringVarP(&testEmailFlag, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
 
 	sendEmailCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Enable verbose debugging output")
 }

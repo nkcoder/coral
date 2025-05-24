@@ -62,7 +62,11 @@ func TestSendEmailCmdValidation(t *testing.T) {
 	// Create a temporary CSV file for testing
 	tempDir, err := os.MkdirTemp("", "test-csv")
 	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		if rerr := os.RemoveAll(tempDir); rerr != nil {
+			t.Errorf("Failed to remove temp directory: %v", rerr)
+		}
+	}()
 
 	csvFile := filepath.Join(tempDir, "test.csv")
 	csvContent := `Member Id,Fob Number,First Name,Last Name,Membership Type,Home Club,Target Club
