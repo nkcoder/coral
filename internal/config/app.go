@@ -47,15 +47,3 @@ func NewAppConfig(environment string, testEmail string, sender string) *AppConfi
 	}
 	return cfg
 }
-
-// WithTestEmail sets a test email address
-func (c *AppConfig) WithTestEmail(email string) *AppConfig {
-	c.TestEmail = email
-	return c
-}
-
-// WithSender sets the default sender email
-func (c *AppConfig) WithSender(sender string) *AppConfig {
-	c.DefaultSender = sender
-	return c
-}

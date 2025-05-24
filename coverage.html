@@ -1,0 +1,1297 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">coral.daniel-guo.com/cmd/email.go (0.0%)</option>
+				
+				<option value="file1">coral.daniel-guo.com/cmd/root.go (0.0%)</option>
+				
+				<option value="file2">coral.daniel-guo.com/internal/config/app.go (100.0%)</option>
+				
+				<option value="file3">coral.daniel-guo.com/internal/csvutil/csvio.go (90.0%)</option>
+				
+				<option value="file4">coral.daniel-guo.com/internal/email/sender.go (87.7%)</option>
+				
+				<option value="file5">coral.daniel-guo.com/internal/logger/logger.go (81.8%)</option>
+				
+				<option value="file6">coral.daniel-guo.com/internal/repository/location.go (0.0%)</option>
+				
+				<option value="file7">coral.daniel-guo.com/internal/repository/pool.go (0.0%)</option>
+				
+				<option value="file8">coral.daniel-guo.com/internal/secrets/manager.go (0.0%)</option>
+				
+				<option value="file9">coral.daniel-guo.com/internal/service/transfer.go (45.2%)</option>
+				
+				<option value="file10">coral.daniel-guo.com/internal/testutil/helpers.go (0.0%)</option>
+				
+				<option value="file11">coral.daniel-guo.com/main.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package cmd
+
+import (
+        "os"
+
+        "coral.daniel-guo.com/internal/config"
+        "coral.daniel-guo.com/internal/logger"
+        "coral.daniel-guo.com/internal/service"
+        "github.com/spf13/cobra"
+)
+
+// sendEmailCmd represents the send-email command for sending club transfer emails
+var sendEmailCmd = &amp;cobra.Command{
+        Use:   "send-email",
+        Short: "Send club transfer emails",
+        Long: `Send club transfer notification emails to clubs.
+This command processes club transfer data from a CSV file and sends 
+personalized emails to each club with their relevant transfer information.`,
+        Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                // Set logging level based on verbose flag
+                if verboseFlag </span><span class="cov0" title="0">{
+                        logger.SetLevel(logger.DebugLevel)
+                        logger.Debug("Debug logging enabled")
+                }</span>
+
+                <span class="cov0" title="0">logger.Info("Transfer type: %s, filename: %s, env: %s",
+                        typeFlag, inputFlag, envFlag)
+
+                // Load application configuration
+                appConfig := config.NewAppConfig(envFlag, testEmailFlag, senderFlag)
+
+                // Create transfer service
+                transferService := service.NewService(appConfig)
+
+                // Create transfer request
+                req := service.TransferRequest{
+                        TransferType: typeFlag,
+                        FileName:     inputFlag,
+                }
+
+                // Process the request
+                if err := transferService.Process(req); err != nil </span><span class="cov0" title="0">{
+                        logger.Error("Failed to process club transfers: %v", err)
+                        os.Exit(1)
+                }</span>
+        },
+}
+
+var (
+        typeFlag      string
+        inputFlag     string
+        senderFlag    string
+        envFlag       string
+        testEmailFlag string
+        verboseFlag   bool
+)
+
+func init() <span class="cov0" title="0">{
+        sendEmailCmd.Flags().StringVarP(&amp;typeFlag, "type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
+
+        sendEmailCmd.Flags().StringVarP(&amp;inputFlag, "input", "i", "", "CSV input file with transfer data")
+
+        sendEmailCmd.Flags().StringVarP(&amp;senderFlag, "sender", "s", "", "Sender email address")
+        sendEmailCmd.Flags().StringVarP(&amp;envFlag, "env", "e", "", "Environment (dev, staging, prod)")
+
+        sendEmailCmd.Flags().StringVarP(&amp;testEmailFlag, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
+
+        sendEmailCmd.Flags().BoolVarP(&amp;verboseFlag, "verbose", "v", false, "Enable verbose debugging output")
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">/*
+Copyright © 2025 NAME HERE &lt;EMAIL ADDRESS&gt;
+*/
+package cmd
+
+import (
+        "os"
+
+        "github.com/spf13/cobra"
+)
+
+var cfgFile string
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &amp;cobra.Command{
+        Use:   "club-transfer",
+        Short: "Club transfer email notification tool",
+        Long:  "A CLI application for processing club transfer data and sending notification emails to clubs.",
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() <span class="cov0" title="0">{
+        err := rootCmd.Execute()
+        if err != nil </span><span class="cov0" title="0">{
+                os.Exit(1)
+        }</span>
+}
+
+func init() <span class="cov0" title="0">{
+        rootCmd.AddCommand(sendEmailCmd)
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Package config provides application configuration
+package config
+
+import (
+        "coral.daniel-guo.com/internal/email"
+        "coral.daniel-guo.com/internal/secrets"
+)
+
+// AppConfig holds the application configuration
+type AppConfig struct {
+        // Environment (dev, staging, prod)
+        Environment string
+
+        // Email sender configuration
+        Email email.Config
+
+        // Secrets manager configuration
+        Secrets secrets.Config
+
+        // Default sender email address
+        DefaultSender string
+
+        // Test email (if set, all emails go here)
+        TestEmail string
+
+        // Worker pool configuration
+        WorkerPoolSize int
+        WorkerDelayMs  int
+}
+
+// NewAppConfig creates a new application configuration with default values
+func NewAppConfig(environment string, testEmail string, sender string) *AppConfig <span class="cov8" title="1">{
+        cfg := &amp;AppConfig{
+                Environment:    environment,
+                Email:          email.DefaultConfig(),
+                Secrets:        secrets.DefaultConfig(),
+                DefaultSender:  "no-reply@the-hub.ai",
+                TestEmail:      "",
+                WorkerPoolSize: 5,
+                WorkerDelayMs:  1000,
+        }
+        if testEmail != "" </span><span class="cov8" title="1">{
+                cfg.TestEmail = testEmail
+        }</span>
+        <span class="cov8" title="1">if sender != "" </span><span class="cov8" title="1">{
+                cfg.DefaultSender = sender
+        }</span>
+        <span class="cov8" title="1">return cfg</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Package csvutil provides utilities for working with CSV data
+package csvutil
+
+import (
+        "bytes"
+        "encoding/csv"
+        "fmt"
+        "os"
+        "strings"
+
+        "coral.daniel-guo.com/internal/model"
+)
+
+// ReadClubTransferCSV reads a CSV file with club transfer data
+func ReadClubTransferCSV(fileName string) ([]model.ClubTransferRow, error) <span class="cov8" title="1">{
+        file, err := os.Open(fileName)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to open file: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer func() </span><span class="cov8" title="1">{
+                if cerr := file.Close(); cerr != nil </span><span class="cov0" title="0">{
+                        // Log the error, but don't override the main error
+                        fmt.Fprintf(os.Stderr, "failed to close file: %v\n", cerr)
+                }</span>
+        }()
+
+        <span class="cov8" title="1">reader := csv.NewReader(file)
+        records, err := reader.ReadAll()
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to read file: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if len(records) == 0 </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("no records found")
+        }</span>
+
+        <span class="cov8" title="1">headers := records[0]
+        colMap := make(map[string]int)
+        for i, colName := range headers </span><span class="cov8" title="1">{
+                colMap[colName] = i
+        }</span>
+
+        <span class="cov8" title="1">requiredCols := []string{
+                "Member Id",
+                "Fob Number",
+                "First Name",
+                "Last Name",
+                "Membership Type",
+                "Home Club",
+                "Target Club",
+        }
+
+        for _, col := range requiredCols </span><span class="cov8" title="1">{
+                if _, ok := colMap[col]; !ok </span><span class="cov8" title="1">{
+                        return nil, fmt.Errorf("column %s not found", col)
+                }</span>
+        }
+
+        <span class="cov8" title="1">var result []model.ClubTransferRow
+        for i, record := range records </span><span class="cov8" title="1">{
+                if i == 0 </span><span class="cov8" title="1">{
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">row := model.ClubTransferRow{
+                        MemberID:       record[colMap["Member Id"]],
+                        FobNumber:      record[colMap["Fob Number"]],
+                        FirstName:      record[colMap["First Name"]],
+                        LastName:       record[colMap["Last Name"]],
+                        MembershipType: record[colMap["Membership Type"]],
+                        HomeClub:       strings.ToUpper(record[colMap["Home Club"]]),
+                        TargetClub:     strings.ToUpper(record[colMap["Target Club"]]),
+                }
+
+                result = append(result, row)</span>
+        }
+
+        <span class="cov8" title="1">return result, nil</span>
+}
+
+// GenerateCSVContent generates CSV content in memory as []byte
+func GenerateCSVContent(data []model.ClubTransferData) ([]byte, error) <span class="cov8" title="1">{
+        var buf bytes.Buffer
+        writer := csv.NewWriter(&amp;buf)
+
+        headers := []string{
+                "Member Id",
+                "Fob Number",
+                "First Name",
+                "Last Name",
+                "Membership Type",
+                "Home Club",
+                "Target Club",
+                "Transfer Type",
+                "Transfer Date",
+        }
+
+        if err := writer.Write(headers); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to write headers: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">for _, transfer := range data </span><span class="cov8" title="1">{
+                record := []string{
+                        transfer.MemberID,
+                        transfer.FobNumber,
+                        transfer.FirstName,
+                        transfer.LastName,
+                        transfer.MembershipType,
+                        transfer.HomeClub,
+                        transfer.TargetClub,
+                        transfer.TransferType,
+                        transfer.TransferDate.Format("2006-01-02"),
+                }
+
+                if err := writer.Write(record); err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to write record: %w", err)
+                }</span>
+        }
+
+        <span class="cov8" title="1">writer.Flush()
+        if err := writer.Error(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error flushing csv writer: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return buf.Bytes(), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Package email provides functionality for sending emails
+package email
+
+import (
+        "bytes"
+        "encoding/base64"
+        "fmt"
+        "mime"
+        "mime/multipart"
+        "net/textproto"
+        "os"
+        "path/filepath"
+
+        "coral.daniel-guo.com/internal/logger"
+        "github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/aws/session"
+        "github.com/aws/aws-sdk-go/service/ses"
+)
+
+// Config contains email sender configuration
+type Config struct {
+        Region string
+}
+
+// DefaultConfig returns a default email configuration
+func DefaultConfig() Config <span class="cov8" title="1">{
+        return Config{
+                Region: "ap-southeast-2",
+        }
+}</span>
+
+// Sender handles sending emails via AWS SES
+type Sender struct {
+        config Config
+}
+
+// NewSender creates a new email sender with the given configuration
+func NewSender(config Config) *Sender <span class="cov8" title="1">{
+        return &amp;Sender{
+                config: config,
+        }
+}</span>
+
+// SendWithAttachmentFile sends an email with an attachment from a file
+func (s *Sender) SendWithAttachmentFile(sender, recipient, subject, body, attachmentPath string) error <span class="cov8" title="1">{
+        // Read the file content
+        fileContent, err := os.ReadFile(attachmentPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to read file: %w", err)
+        }</span>
+
+        // Extract filename from path
+        <span class="cov0" title="0">filename := filepath.Base(attachmentPath)
+
+        return s.SendWithAttachment(sender, recipient, subject, body, filename, fileContent)</span>
+}
+
+// SendWithAttachment sends an email with an in-memory attachment
+func (s *Sender) SendWithAttachment(
+        sender, recipient, subject, body, attachmentName string,
+        attachmentContent []byte,
+) error <span class="cov8" title="1">{
+        // Create a buffer for the message
+        var buf bytes.Buffer
+
+        // Set up email headers
+        headers := textproto.MIMEHeader{}
+        headers.Set("From", sender)
+        headers.Set("To", recipient)
+        headers.Set("Subject", subject)
+        headers.Set("MIME-Version", "1.0")
+
+        // Create multipart writer
+        writer := multipart.NewWriter(&amp;buf)
+        headers.Set("Content-Type", "multipart/mixed; boundary="+writer.Boundary())
+
+        // Write headers
+        for k, vv := range headers </span><span class="cov8" title="1">{
+                for _, v := range vv </span><span class="cov8" title="1">{
+                        fmt.Fprintf(&amp;buf, "%s: %s\r\n", k, v)
+                }</span>
+        }
+        <span class="cov8" title="1">buf.WriteString("\r\n")
+
+        // Create alternative part for text/html versions
+        altWriter := multipart.NewWriter(&amp;buf)
+        fmt.Fprintf(&amp;buf, "--%s\r\n", writer.Boundary())
+        fmt.Fprintf(&amp;buf, "Content-Type: multipart/alternative; boundary=%s\r\n\r\n", altWriter.Boundary())
+
+        // Add text part
+        fmt.Fprintf(&amp;buf, "--%s\r\n", altWriter.Boundary())
+        fmt.Fprintf(&amp;buf, "Content-Type: text/plain; charset=UTF-8\r\n\r\n")
+        buf.WriteString(StripHTML(body))
+        buf.WriteString("\r\n")
+
+        // Add HTML part
+        fmt.Fprintf(&amp;buf, "--%s\r\n", altWriter.Boundary())
+        fmt.Fprintf(&amp;buf, "Content-Type: text/html; charset=UTF-8\r\n\r\n")
+        buf.WriteString(body)
+        buf.WriteString("\r\n")
+
+        // Close alternative part
+        fmt.Fprintf(&amp;buf, "--%s--\r\n", altWriter.Boundary())
+
+        // Add attachment
+        fileExt := filepath.Ext(attachmentName)
+        mimeType := mime.TypeByExtension(fileExt)
+        if mimeType == "" </span><span class="cov0" title="0">{
+                mimeType = "application/octet-stream"
+        }</span>
+
+        <span class="cov8" title="1">fmt.Fprintf(&amp;buf, "--%s\r\n", writer.Boundary())
+        fmt.Fprintf(&amp;buf, "Content-Type: %s\r\n", mimeType)
+        fmt.Fprintf(&amp;buf, "Content-Disposition: attachment; filename=%s\r\n", attachmentName)
+        fmt.Fprintf(&amp;buf, "Content-Transfer-Encoding: base64\r\n\r\n")
+
+        // Base64 encode the attachment
+        encoder := base64.NewEncoder(base64.StdEncoding, &amp;buf)
+        _, err := encoder.Write(attachmentContent)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to encode attachment: %w", err)
+        }</span>
+        <span class="cov8" title="1">if err := encoder.Close(); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to close encoder: %w", err)
+        }</span>
+        <span class="cov8" title="1">buf.WriteString("\r\n")
+
+        // Close the multipart message
+        fmt.Fprintf(&amp;buf, "--%s--\r\n", writer.Boundary())
+
+        // Create a new AWS SES session
+        sess, err := session.NewSession(&amp;aws.Config{
+                Region: aws.String(s.config.Region),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create SES session: %w", err)
+        }</span>
+
+        // Create a new SES client
+        <span class="cov8" title="1">svc := ses.New(sess)
+
+        // Send the raw email
+        input := &amp;ses.SendRawEmailInput{
+                RawMessage: &amp;ses.RawMessage{
+                        Data: buf.Bytes(),
+                },
+                Source: aws.String(sender),
+                Destinations: []*string{
+                        aws.String(recipient),
+                },
+        }
+
+        _, err = svc.SendRawEmail(input)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to send email: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Email sent successfully to: %s", recipient)
+        return nil</span>
+}
+
+// StripHTML removes HTML tags from a string to create plain text
+func StripHTML(html string) string <span class="cov8" title="1">{
+        var buf bytes.Buffer
+        inTag := false
+
+        for _, r := range html </span><span class="cov8" title="1">{
+                switch </span>{
+                case r == '&lt;':<span class="cov8" title="1">
+                        inTag = true</span>
+                case r == '&gt;':<span class="cov8" title="1">
+                        inTag = false</span>
+                case !inTag:<span class="cov8" title="1">
+                        buf.WriteRune(r)</span>
+                }
+        }
+
+        <span class="cov8" title="1">return buf.String()</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Package logger provides a simple logging interface for the application
+package logger
+
+import (
+        "log"
+        "os"
+)
+
+// LogLevel represents the logging level
+type LogLevel int
+
+const (
+        // DebugLevel logs detailed information for debugging
+        DebugLevel LogLevel = iota
+        // InfoLevel logs general operational information
+        InfoLevel
+        // WarnLevel logs issues that might need attention
+        WarnLevel
+        // ErrorLevel logs issues that need addressing
+        ErrorLevel
+)
+
+var (
+        // Current logging level
+        currentLevel = InfoLevel
+
+        // Loggers for different levels
+        debugLogger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime)
+        infoLogger  = log.New(os.Stdout, "INFO:  ", log.Ldate|log.Ltime)
+        warnLogger  = log.New(os.Stderr, "WARN:  ", log.Ldate|log.Ltime)
+        errorLogger = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime)
+)
+
+// SetLevel sets the minimum logging level
+func SetLevel(level LogLevel) <span class="cov8" title="1">{
+        currentLevel = level
+}</span>
+
+// Debug logs messages at DEBUG level
+func Debug(format string, args ...any) <span class="cov8" title="1">{
+        if currentLevel &lt;= DebugLevel </span><span class="cov8" title="1">{
+                debugLogger.Printf(format, args...)
+        }</span>
+}
+
+// Info logs messages at INFO level
+func Info(format string, args ...any) <span class="cov8" title="1">{
+        if currentLevel &lt;= InfoLevel </span><span class="cov8" title="1">{
+                infoLogger.Printf(format, args...)
+        }</span>
+}
+
+// Warn logs messages at WARN level
+func Warn(format string, args ...any) <span class="cov8" title="1">{
+        if currentLevel &lt;= WarnLevel </span><span class="cov8" title="1">{
+                warnLogger.Printf(format, args...)
+        }</span>
+}
+
+// Error logs messages at ERROR level
+func Error(format string, args ...any) <span class="cov8" title="1">{
+        if currentLevel &lt;= ErrorLevel </span><span class="cov8" title="1">{
+                errorLogger.Printf(format, args...)
+        }</span>
+}
+
+// Fatal logs an error message and exits the program
+func Fatal(format string, args ...any) <span class="cov0" title="0">{
+        errorLogger.Printf(format, args...)
+        os.Exit(1)
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// Package repository provides data access functionality
+package repository
+
+import (
+        "context"
+        "database/sql"
+        "fmt"
+        "strings"
+
+        "coral.daniel-guo.com/internal/model"
+)
+
+// LocationRepository provides data access for locations
+type LocationRepository struct {
+        db *Pool
+}
+
+// NewLocationRepository creates a new location repository
+func NewLocationRepository(db *Pool) *LocationRepository <span class="cov0" title="0">{
+        return &amp;LocationRepository{db: db}
+}</span>
+
+// FindByName looks up a location by its name
+func (r *LocationRepository) FindByName(name string) (*model.Location, error) <span class="cov0" title="0">{
+        ctx := context.Background()
+        trimmedName := strings.TrimSpace(name)
+
+        query := `
+                SELECT id, name, email
+                FROM location
+                WHERE TRIM(name) = $1
+        `
+
+        var location model.Location
+        var email sql.NullString
+
+        err := r.db.QueryRow(ctx, query, trimmedName).Scan(&amp;location.ID, &amp;location.Name, &amp;email)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == sql.ErrNoRows </span><span class="cov0" title="0">{
+                        return nil, nil
+                }</span>
+                <span class="cov0" title="0">return nil, fmt.Errorf("error querying location by name: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">if email.Valid </span><span class="cov0" title="0">{
+                location.Email = email.String
+        }</span>
+
+        <span class="cov0" title="0">return &amp;location, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// Package repository provides data access functionality
+package repository
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+
+        "coral.daniel-guo.com/internal/logger"
+        "coral.daniel-guo.com/internal/secrets"
+        "github.com/jackc/pgx/v5"
+        "github.com/jackc/pgx/v5/pgxpool"
+)
+
+// DBConfig contains database connection configuration
+type DBConfig struct {
+        Host     string
+        Port     int
+        Username string
+        Password string
+        DBName   string
+}
+
+// Pool provides a wrapper around pgxpool for database operations
+type Pool struct {
+        pool *pgxpool.Pool
+}
+
+// PoolConfig holds configuration for database pool creation
+type PoolConfig struct {
+        Environment    string
+        SecretsManager *secrets.Manager
+}
+
+// NewPool creates a new database connection pool
+func NewPool(cfg PoolConfig) (*Pool, error) <span class="cov0" title="0">{
+        config, err := loadDBConfig(cfg.Environment, cfg.SecretsManager)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to load db config: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+                config.Username, config.Password, config.Host, config.Port, config.DBName)
+
+        dbPool, err := pgxpool.New(context.Background(), connString)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("unable to create connection pool: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := dbPool.Ping(context.Background()); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to ping database: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Successfully connected to database at %s:%d/%s\n", config.Host, config.Port, config.DBName)
+        return &amp;Pool{pool: dbPool}, nil</span>
+}
+
+// Close closes the database connection pool
+func (p *Pool) Close() <span class="cov0" title="0">{
+        p.pool.Close()
+}</span>
+
+// QueryRow executes a query that is expected to return a single row
+func (p *Pool) QueryRow(ctx context.Context, query string, args ...any) pgx.Row <span class="cov0" title="0">{
+        return p.pool.QueryRow(ctx, query, args...)
+}</span>
+
+// Query executes a query that returns rows
+func (p *Pool) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) <span class="cov0" title="0">{
+        return p.pool.Query(ctx, query, args...)
+}</span>
+
+// Exec executes a query that doesn't return rows
+func (p *Pool) Exec(ctx context.Context, query string, args ...any) (int64, error) <span class="cov0" title="0">{
+        result := p.pool.QueryRow(ctx, "SELECT 1")
+        if err := result.Scan(new(int)); err != nil </span><span class="cov0" title="0">{
+                return 0, fmt.Errorf("connection test failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">commandTag, err := p.pool.Exec(ctx, query, args...)
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, fmt.Errorf("failed to execute query: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return commandTag.RowsAffected(), nil</span>
+}
+
+// loadDBConfig loads database configuration from AWS Secrets Manager
+func loadDBConfig(env string, secretsManager *secrets.Manager) (*DBConfig, error) <span class="cov0" title="0">{
+        secretName := fmt.Sprintf("hub-insights-rds-cluster-readonly-%s", env)
+        logger.Info("Loading database configuration from secret: %s", secretName)
+
+        secretData, err := secretsManager.GetSecret(secretName)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get secret from %s: %w", env, err)
+        }</span>
+
+        <span class="cov0" title="0">var dbConfig DBConfig
+        if err := json.Unmarshal([]byte(secretData), &amp;dbConfig); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to unmarshal secret data: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;dbConfig, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// Package secrets provides access to secure configuration values
+package secrets
+
+import (
+        "fmt"
+
+        "coral.daniel-guo.com/internal/logger"
+        "github.com/aws/aws-sdk-go/aws"
+        "github.com/aws/aws-sdk-go/aws/session"
+        "github.com/aws/aws-sdk-go/service/secretsmanager"
+)
+
+// Config contains AWS Secrets Manager configuration
+type Config struct {
+        Region string
+}
+
+// DefaultConfig returns a default secrets configuration
+func DefaultConfig() Config <span class="cov0" title="0">{
+        return Config{
+                Region: "ap-southeast-2",
+        }
+}</span>
+
+// Manager handles retrieving secrets from AWS Secrets Manager
+type Manager struct {
+        config Config
+}
+
+// NewManager creates a new secrets manager with the given configuration
+func NewManager(config Config) *Manager <span class="cov0" title="0">{
+        return &amp;Manager{
+                config: config,
+        }
+}</span>
+
+// GetSecret gets a secret from AWS Secrets Manager
+func (m *Manager) GetSecret(secretName string) (string, error) <span class="cov0" title="0">{
+        logger.Info("Getting secret: %s", secretName)
+
+        // Create a new AWS session with the configuration
+        sess, err := session.NewSession(&amp;aws.Config{
+                Region: aws.String(m.config.Region),
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to create session: %w", err)
+        }</span>
+
+        // Create a new Secrets Manager client
+        <span class="cov0" title="0">svc := secretsmanager.New(sess)
+
+        // Create a request to get the secret value
+        input := &amp;secretsmanager.GetSecretValueInput{
+                SecretId: aws.String(secretName),
+        }
+
+        // Get the secret value
+        result, err := svc.GetSecretValue(input)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to get secret: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if result.SecretString == nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("secret value is nil")
+        }</span>
+
+        <span class="cov0" title="0">secretString := *result.SecretString
+
+        return secretString, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Package transfer provides club transfer functionality
+package service
+
+import (
+        "fmt"
+        "sync"
+        "time"
+
+        "coral.daniel-guo.com/internal/config"
+        "coral.daniel-guo.com/internal/csvutil"
+        "coral.daniel-guo.com/internal/email"
+        "coral.daniel-guo.com/internal/logger"
+        "coral.daniel-guo.com/internal/model"
+        "coral.daniel-guo.com/internal/repository"
+        "coral.daniel-guo.com/internal/secrets"
+)
+
+// Service handles club transfer operations
+type Service struct {
+        config         *config.AppConfig
+        secretsManager *secrets.Manager
+        emailSender    *email.Sender
+}
+
+// NewService creates a new transfer service
+func NewService(cfg *config.AppConfig) *Service <span class="cov8" title="1">{
+        return &amp;Service{
+                config:         cfg,
+                secretsManager: secrets.NewManager(cfg.Secrets),
+                emailSender:    email.NewSender(cfg.Email),
+        }
+}</span>
+
+// TransferRequest contains parameters for processing club transfers
+type TransferRequest struct {
+        TransferType string
+        FileName     string
+}
+
+// Process handles the club transfer workflow
+func (s *Service) Process(req TransferRequest) error <span class="cov0" title="0">{
+        // Setup database connection pool
+        dbConfig := repository.PoolConfig{
+                Environment:    s.config.Environment,
+                SecretsManager: s.secretsManager,
+        }
+
+        db, err := repository.NewPool(dbConfig)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to connect to database: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer db.Close()
+
+        logger.Info("Starting club transfer process for type: %s", req.TransferType)
+
+        // Read club transfer data from CSV file
+        data, err := s.readClubTransferData(req.FileName)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to read club transfer data: %w", err)
+        }</span>
+        <span class="cov0" title="0">logger.Info("Successfully read club transfer data from %s", req.FileName)
+
+        // Send emails to clubs
+        if err := s.sendEmailToClubs(data, db, req.TransferType); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to send emails to clubs: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Club transfer process completed successfully")
+        return nil</span>
+}
+
+// readClubTransferData reads the club transfer data from the CSV file
+func (s *Service) readClubTransferData(fileName string) (map[string][]model.ClubTransferData, error) <span class="cov8" title="1">{
+        // Read CSV and parse data
+        clubTransferRows, err := csvutil.ReadClubTransferCSV(fileName)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("error reading club transfer data: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">transfers := make(map[string][]model.ClubTransferData)
+        for _, row := range clubTransferRows </span><span class="cov8" title="1">{
+                transferIn := model.ClubTransferData{
+                        MemberID:       row.MemberID,
+                        FobNumber:      row.FobNumber,
+                        FirstName:      row.FirstName,
+                        LastName:       row.LastName,
+                        MembershipType: row.MembershipType,
+                        HomeClub:       row.HomeClub,
+                        TargetClub:     row.TargetClub,
+                        TransferType:   "TRANSFER IN",
+                        TransferDate:   time.Now(),
+                }
+
+                transferOut := transferIn
+                transferOut.TransferType = "TRANSFER OUT"
+
+                // Add transfers to appropriate clubs
+                if _, exists := transfers[row.TargetClub]; !exists </span><span class="cov8" title="1">{
+                        transfers[row.TargetClub] = []model.ClubTransferData{}
+                }</span>
+                <span class="cov8" title="1">transfers[row.TargetClub] = append(transfers[row.TargetClub], transferIn)
+
+                if _, exists := transfers[row.HomeClub]; !exists </span><span class="cov8" title="1">{
+                        transfers[row.HomeClub] = []model.ClubTransferData{}
+                }</span>
+                <span class="cov8" title="1">transfers[row.HomeClub] = append(transfers[row.HomeClub], transferOut)</span>
+        }
+
+        <span class="cov8" title="1">return transfers, nil</span>
+}
+
+// getOutputFileName generates the output file name based on payment type and club name
+func (s *Service) getOutputFileName(transferType, clubName string) string <span class="cov8" title="1">{
+        if transferType == "DD" </span><span class="cov8" title="1">{
+                return fmt.Sprintf("dd_club_transfer_%s.csv", clubName)
+        }</span>
+        <span class="cov8" title="1">return fmt.Sprintf("pif_club_transfer_%s.csv", clubName)</span>
+}
+
+// sendEmailToClubs sends emails to clubs with their transfer data
+func (s *Service) sendEmailToClubs(
+        data map[string][]model.ClubTransferData,
+        db *repository.Pool,
+        transferType string,
+) error <span class="cov0" title="0">{
+        // Create location repository
+        locationRepo := repository.NewLocationRepository(db)
+
+        clubs := make([]string, 0, len(data))
+        for club := range data </span><span class="cov0" title="0">{
+                clubs = append(clubs, club)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Processing %d clubs for email delivery", len(clubs))
+
+        maxWorkers := s.config.WorkerPoolSize
+        delayMs := s.config.WorkerDelayMs
+
+        if len(clubs) &lt; maxWorkers </span><span class="cov0" title="0">{
+                maxWorkers = len(clubs)
+        }</span>
+
+        // Create channels for work distribution and error collection
+        <span class="cov0" title="0">type result struct {
+                clubName string
+                err      error
+        }
+        jobs := make(chan string, len(clubs))
+        results := make(chan result, len(clubs))
+
+        // Start worker pool
+        wg := sync.WaitGroup{}
+        wg.Add(maxWorkers)
+        for i := 0; i &lt; maxWorkers; i++ </span><span class="cov0" title="0">{
+                go func() </span><span class="cov0" title="0">{
+                        defer wg.Done()
+                        for clubName := range jobs </span><span class="cov0" title="0">{
+                                err := s.sendEmail(clubName, data, transferType, locationRepo)
+                                results &lt;- result{clubName: clubName, err: err}
+                                // Sleep to avoid overwhelming email service
+                                time.Sleep(time.Duration(delayMs) * time.Millisecond)
+                        }</span>
+                }()
+        }
+
+        // Send jobs to workers
+        <span class="cov0" title="0">for _, clubName := range clubs </span><span class="cov0" title="0">{
+                jobs &lt;- clubName
+        }</span>
+        <span class="cov0" title="0">close(jobs)
+
+        // Wait for all workers to complete
+        wg.Wait()
+        close(results)
+
+        // Collect and handle errors
+        var failedClubs []string
+        for res := range results </span><span class="cov0" title="0">{
+                if res.err != nil </span><span class="cov0" title="0">{
+                        logger.Error("Failed to send email to club %s: %v", res.clubName, res.err)
+                        failedClubs = append(failedClubs, res.clubName)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if len(failedClubs) &gt; 0 </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to send emails to %d clubs: %v", len(failedClubs), failedClubs)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (s *Service) sendEmail(
+        clubName string,
+        data map[string][]model.ClubTransferData,
+        transferType string,
+        locationRepo repository.LocationRepositoryInterface,
+) error <span class="cov8" title="1">{
+        // Get current month and year information for email subject/content
+        now := time.Now()
+        lastMonth := now.AddDate(0, -1, 0).Month().String()
+        currentYear := now.Year()
+
+        var subject, bodyContent string
+        if transferType == "PIF" </span><span class="cov8" title="1">{
+                subject = fmt.Sprintf("Club Transfer for Paid in Full Members (%s %d)", lastMonth, currentYear)
+                bodyContent = fmt.Sprintf(
+                        "Please find attached the Paid in Full club transfer data for your club (%s %d).",
+                        lastMonth,
+                        currentYear,
+                )
+        }</span> else<span class="cov0" title="0"> {
+                lastQuarter := now.AddDate(0, -3, 0).Month().String()
+                subject = fmt.Sprintf("Club Transfer for Direct Debit Members (%s - %s %d)", lastQuarter, lastMonth, currentYear)
+                bodyContent = fmt.Sprintf("Please find attached the Direct Debit club transfer data for your club (%s - %s %d).", lastQuarter, lastMonth, currentYear)
+        }</span>
+
+        <span class="cov8" title="1">body := fmt.Sprintf(`
+                &lt;html&gt;
+                &lt;head&gt;&lt;/head&gt;
+                &lt;body&gt;&lt;p&gt;Hello team,&lt;/p&gt;
+                &lt;p&gt;%s&lt;/p&gt;
+                &lt;p&gt;Regards&lt;/p&gt;
+                &lt;/html&gt;
+  `, bodyContent)
+
+        logger.Debug("Processing club: %s", clubName)
+
+        location, err := locationRepo.FindByName(clubName)
+        if err != nil </span><span class="cov8" title="1">{
+                logger.Warn("Error finding location for club %s: %v", clubName, err)
+                return fmt.Errorf("club %s: error finding location: %w", clubName, err)
+        }</span>
+
+        <span class="cov8" title="1">if location == nil </span><span class="cov8" title="1">{
+                logger.Warn("Location not found for club: %s", clubName)
+                return fmt.Errorf("club %s: location not found", clubName)
+        }</span>
+
+        <span class="cov8" title="1">if location.Email == "" </span><span class="cov8" title="1">{
+                logger.Warn("Email not found for club: %s", clubName)
+                return fmt.Errorf("club %s: email not found", clubName)
+        }</span>
+
+        <span class="cov8" title="1">recipientEmail := location.Email
+        logger.Debug("Location email for %s: %s", clubName, recipientEmail)
+
+        // Generate CSV content in memory
+        csvContent, err := csvutil.GenerateCSVContent(data[clubName])
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("Error generating CSV content for club %s: %v", clubName, err)
+                return fmt.Errorf("club %s: error generating CSV content: %w", clubName, err)
+        }</span>
+
+        // Get attachment filename
+        <span class="cov8" title="1">attachmentName := s.getOutputFileName(transferType, clubName)
+
+        // Determine recipient email
+        if s.config.TestEmail != "" </span><span class="cov0" title="0">{
+                logger.Info("Using test email %s instead of club email %s", s.config.TestEmail, recipientEmail)
+                recipientEmail = s.config.TestEmail
+        }</span>
+
+        // Send email with in-memory attachment
+        <span class="cov8" title="1">if err := s.emailSender.SendWithAttachment(
+                s.config.DefaultSender,
+                recipientEmail,
+                subject,
+                body,
+                attachmentName,
+                csvContent,
+        ); err != nil </span><span class="cov8" title="1">{
+                logger.Error("Error sending email for club %s: %v", clubName, err)
+                return fmt.Errorf("club %s: failed to send email: %w", clubName, err)
+        }</span>
+
+        <span class="cov0" title="0">logger.Info("Email sent successfully to club: %s", clubName)
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">// Package testutil provides testing utilities and helpers
+package testutil
+
+import (
+        "os"
+        "path/filepath"
+        "testing"
+        "time"
+
+        "coral.daniel-guo.com/internal/config"
+        "coral.daniel-guo.com/internal/email"
+        "coral.daniel-guo.com/internal/model"
+        "coral.daniel-guo.com/internal/secrets"
+)
+
+// CreateTempDir creates a temporary directory for testing
+func CreateTempDir(t *testing.T, prefix string) string <span class="cov0" title="0">{
+        tempDir, err := os.MkdirTemp("", prefix)
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create temp dir: %v", err)
+        }</span>
+        <span class="cov0" title="0">return tempDir</span>
+}
+
+// CreateTestCSVFile creates a CSV file with the given content in the specified directory
+func CreateTestCSVFile(t *testing.T, dir, filename, content string) string <span class="cov0" title="0">{
+        filePath := filepath.Join(dir, filename)
+
+        err := os.WriteFile(filePath, []byte(content), 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                t.Fatalf("Failed to create test CSV file: %v", err)
+        }</span>
+        <span class="cov0" title="0">return filePath</span>
+}
+
+// CleanupTempDir removes a temporary directory
+func CleanupTempDir(t *testing.T, dir string) <span class="cov0" title="0">{
+        if err := os.RemoveAll(dir); err != nil </span><span class="cov0" title="0">{
+                t.Logf("Warning: Failed to cleanup temp dir %s: %v", dir, err)
+        }</span>
+}
+
+// CreateTestConfig creates a test configuration
+func CreateTestConfig() *config.AppConfig <span class="cov0" title="0">{
+        return &amp;config.AppConfig{
+                Environment:    "test",
+                DefaultSender:  "test@example.com",
+                TestEmail:      "",
+                WorkerPoolSize: 2,
+                WorkerDelayMs:  100,
+                Email: email.Config{
+                        Region: "us-east-1",
+                },
+                Secrets: secrets.Config{
+                        Region: "us-east-1",
+                },
+        }
+}</span>
+
+// CreateTestClubTransferData creates test club transfer data
+func CreateTestClubTransferData() []model.ClubTransferData <span class="cov0" title="0">{
+        transferDate := time.Date(2023, 12, 15, 10, 30, 0, 0, time.UTC)
+
+        return []model.ClubTransferData{
+                {
+                        MemberID:       "12345",
+                        FobNumber:      "FOB001",
+                        FirstName:      "John",
+                        LastName:       "Doe",
+                        MembershipType: "Premium",
+                        HomeClub:       "CLUB A",
+                        TargetClub:     "CLUB B",
+                        TransferType:   "TRANSFER IN",
+                        TransferDate:   transferDate,
+                },
+                {
+                        MemberID:       "67890",
+                        FobNumber:      "FOB002",
+                        FirstName:      "Jane",
+                        LastName:       "Smith",
+                        MembershipType: "Standard",
+                        HomeClub:       "CLUB C",
+                        TargetClub:     "CLUB A",
+                        TransferType:   "TRANSFER OUT",
+                        TransferDate:   transferDate,
+                },
+        }
+}</span>
+
+// CreateTestLocation creates a test location
+func CreateTestLocation(id, name, email string) *model.Location <span class="cov0" title="0">{
+        return &amp;model.Location{
+                ID:    id,
+                Name:  name,
+                Email: email,
+        }
+}</span>
+
+// SampleCSVContent provides sample CSV content for testing
+const SampleCSVContent = `Member Id,Fob Number,First Name,Last Name,Membership Type,Home Club,Target Club
+12345,FOB001,John,Doe,Premium,CLUB A,CLUB B
+67890,FOB002,Jane,Smith,Standard,CLUB C,CLUB A
+11111,FOB003,Bob,Johnson,Basic,CLUB B,CLUB C`
+
+// InvalidCSVContent provides invalid CSV content for testing error cases
+const InvalidCSVContent = `Member Id,First Name,Last Name
+12345,John,Doe`
+
+// EmptyCSVContent provides empty CSV content for testing
+const EmptyCSVContent = ``
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">/*
+Copyright © 2025 NAME HERE &lt;EMAIL ADDRESS&gt;
+
+*/
+// Package main is the entry point for the club transfer email application
+package main
+
+import "coral.daniel-guo.com/cmd"
+
+func main() <span class="cov0" title="0">{
+        cmd.Execute()
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
