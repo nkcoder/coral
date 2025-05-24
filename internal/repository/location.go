@@ -12,11 +12,11 @@ import (
 
 // LocationRepository provides data access for locations
 type LocationRepository struct {
-	db *Pool
+	db PoolInterface
 }
 
 // NewLocationRepository creates a new location repository
-func NewLocationRepository(db *Pool) *LocationRepository {
+func NewLocationRepository(db PoolInterface) *LocationRepository {
 	return &LocationRepository{db: db}
 }
 

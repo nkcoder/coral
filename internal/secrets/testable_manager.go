@@ -16,7 +16,11 @@ type TestableManager struct {
 }
 
 // NewTestableManager creates a new testable secrets manager with dependency injection
-func NewTestableManager(config Config, sessionCreator SessionCreator, clientFactory func(*aws.Config) SecretsManagerAPI) *TestableManager {
+func NewTestableManager(
+	config Config,
+	sessionCreator SessionCreator,
+	clientFactory func(*aws.Config) SecretsManagerAPI,
+) *TestableManager {
 	if sessionCreator == nil {
 		sessionCreator = &DefaultSessionCreator{}
 	}

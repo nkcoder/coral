@@ -1,6 +1,12 @@
-# Club Transfer Email Application
+# Description
 
-A Go application for processing club transfer data and sending notification emails to clubs.
+A CLI script for processing CSV data and sending emails using:
+- [Cobra](https://github.com/spf13/cobra): to create CLI application
+- [Task](https://taskfile.dev/): for task runner
+- [golangci-lint](https://github.com/golangci/golangci-lint): for linting and formatting
+- [pgx](https://github.com/jackc/pgx): communicating with PostgreSQL
+- [testify](https://github.com/stretchr/testify): for testing
+
 
 ## Configuration
 

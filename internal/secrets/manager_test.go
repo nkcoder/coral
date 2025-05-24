@@ -25,7 +25,7 @@ func TestConfig_StructFields(t *testing.T) {
 	}
 
 	// Verify field types and accessibility
-	var _ string = config.Region
+	var _ = config.Region
 
 	// Verify field can be set
 	config.Region = "us-west-2"
@@ -115,7 +115,7 @@ func TestManager_StructFields(t *testing.T) {
 	manager := NewManager(config)
 
 	// Verify field types and accessibility
-	var _ Config = manager.config
+	var _ = manager.config
 
 	// Verify the config is stored correctly
 	if manager.config.Region != "test-region" {
@@ -152,7 +152,9 @@ type mockSecretsManagerClient struct {
 	GetSecretValueFunc func(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+func (m *mockSecretsManagerClient) GetSecretValue(
+	input *secretsmanager.GetSecretValueInput,
+) (*secretsmanager.GetSecretValueOutput, error) {
 	return m.GetSecretValueFunc(input)
 }
 

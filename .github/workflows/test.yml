@@ -63,11 +63,14 @@ jobs:
       - name: Build application
         run: go build -v ./...
 
-      - name: Build binary
-        run: go build -o email-app .
+      - name: Build linux binary
+        run: GOOS=linux GOARCH=arm64 go build -o email-app-linux .
+
+      - name: Build mac binary
+        run: GOOS=darwin GOARCH=arm64 go build -o email-app-mac .
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: email-app-go
-          path: email-app
+          path: email-app*
