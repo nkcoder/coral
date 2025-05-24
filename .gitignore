@@ -3,3 +3,4 @@
 .vscode
 email-app*
 .DS_Store
+coverage*
