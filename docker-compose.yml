@@ -1,40 +1,12 @@
-version: '3.8'
-
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: club-transfer-app:latest
+    image: club-transfer-app:1.0.0
     container_name: club-transfer-app
     environment:
-      - CORAL_ENVIRONMENT=dev
-      - CORAL_EMAIL_SENDER=no-reply@the-hub.ai
-      - CORAL_AWS_REGION=ap-southeast-2
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION=ap-southeast-2
     volumes:
       - ./data:/app/data:ro
-      - ./config.yaml:/app/config.yaml:ro
-      - ./config.dev.yaml:/app/config.dev.yaml:ro
-      - ./config.prod.yaml:/app/config.prod.yaml:ro
-    command: ["send-email", "-e", "dev", "-t", "PIF", "-i", "/app/data/pif_club_transfer.csv", "-s", "no-reply@the-hub.ai"]
-
-  # Development database (for future integration)
-  postgres:
-    image: postgres:15-alpine
-    container_name: club-transfer-db
-    environment:
-      - POSTGRES_USER=coral
-      - POSTGRES_PASSWORD=coral_dev_password
-      - POSTGRES_DB=coral_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    profiles:
-      - dev
-
-volumes:
-  postgres_data: 
+    working_dir: /app
+    command: ['send-email', '-e', 'dev', '-t', 'PIF', '-i', '/app/data/pif_club_transfer.csv', '-s', 'no-reply@the-hub.ai']

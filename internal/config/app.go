@@ -29,15 +29,23 @@ type AppConfig struct {
 }
 
 // NewAppConfig creates a new application configuration with default values
-func NewAppConfig(environment string) *AppConfig {
-	return &AppConfig{
+func NewAppConfig(environment string, testEmail string, sender string) *AppConfig {
+	cfg := &AppConfig{
 		Environment:    environment,
 		Email:          email.DefaultConfig(),
 		Secrets:        secrets.DefaultConfig(),
 		DefaultSender:  "no-reply@the-hub.ai",
+		TestEmail:      "",
 		WorkerPoolSize: 5,
 		WorkerDelayMs:  1000,
 	}
+	if testEmail != "" {
+		cfg.TestEmail = testEmail
+	}
+	if sender != "" {
+		cfg.DefaultSender = sender
+	}
+	return cfg
 }
 
 // WithTestEmail sets a test email address

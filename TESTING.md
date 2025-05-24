@@ -10,7 +10,7 @@ This document outlines the comprehensive testing strategy implemented for the Cl
 
 | Package | Coverage | Description |
 |---------|----------|-------------|
-| `internal/config` | 90.3% | Configuration management with Viper |
+| `internal/config` | 90.3% | Configuration management with |
 | `internal/csvutil` | 92.1% | CSV reading and generation utilities |
 | `internal/email` | 89.1% | Email sending with AWS SES |
 | `internal/logger` | 81.8% | Structured logging functionality |

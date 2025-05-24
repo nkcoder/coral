@@ -133,7 +133,6 @@ func (s *Service) sendEmailToClubs(
 
 	logger.Info("Processing %d clubs for email delivery", len(clubs))
 
-	// Get configuration from Viper via the AppConfig
 	maxWorkers := s.config.WorkerPoolSize
 	delayMs := s.config.WorkerDelayMs
 

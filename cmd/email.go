@@ -7,7 +7,6 @@ import (
 	"coral.daniel-guo.com/internal/logger"
 	"coral.daniel-guo.com/internal/service"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // sendEmailCmd represents the send-email command for sending club transfer emails
@@ -19,28 +18,24 @@ This command processes club transfer data from a CSV file and sends
 personalized emails to each club with their relevant transfer information.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Set logging level based on verbose flag
-		if verbose {
+		if verboseFlag {
 			logger.SetLevel(logger.DebugLevel)
 			logger.Debug("Debug logging enabled")
 		}
 
-		// Get configuration values from command line flags
-		transferType := viper.GetString("transfer.type")
-		input := viper.GetString("transfer.input")
-
 		logger.Info("Transfer type: %s, filename: %s, env: %s",
-			transferType, input, viper.GetString("env"))
+			typeFlag, inputFlag, envFlag)
 
 		// Load application configuration
-		appConfig := config.LoadConfig()
+		appConfig := config.NewAppConfig(envFlag, testEmailFlag, senderFlag)
 
 		// Create transfer service
 		transferService := service.NewService(appConfig)
 
 		// Create transfer request
 		req := service.TransferRequest{
-			TransferType: transferType,
-			FileName:     input,
+			TransferType: typeFlag,
+			FileName:     inputFlag,
 		}
 
 		// Process the request
@@ -51,47 +46,24 @@ personalized emails to each club with their relevant transfer information.`,
 	},
 }
 
-var verbose bool
+var (
+	typeFlag      string
+	inputFlag     string
+	senderFlag    string
+	envFlag       string
+	testEmailFlag string
+	verboseFlag   bool
+)
 
 func init() {
-	// Define command-line flags with viper bindings
-	sendEmailCmd.Flags().StringP("type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
-	if err := viper.BindPFlag("transfer.type", sendEmailCmd.Flags().Lookup("type")); err != nil {
-		logger.Error("Failed to bind flag 'type': %v", err)
-		os.Exit(1)
-	}
-	if err := sendEmailCmd.MarkFlagRequired("type"); err != nil {
-		logger.Error("Failed to mark flag 'type' as required: %v", err)
-		os.Exit(1)
-	}
+	sendEmailCmd.Flags().StringVarP(&typeFlag, "type", "t", "", "Club transfer type: PIF (Paid in Full) or DD (Direct Debit)")
 
-	sendEmailCmd.Flags().StringP("input", "i", "", "CSV input file with transfer data")
-	if err := viper.BindPFlag("transfer.input", sendEmailCmd.Flags().Lookup("input")); err != nil {
-		logger.Error("Failed to bind flag 'input': %v", err)
-		os.Exit(1)
-	}
-	if err := sendEmailCmd.MarkFlagRequired("input"); err != nil {
-		logger.Error("Failed to mark flag 'input' as required: %v", err)
-		os.Exit(1)
-	}
+	sendEmailCmd.Flags().StringVarP(&inputFlag, "input", "i", "", "CSV input file with transfer data")
 
-	sendEmailCmd.Flags().StringP("sender", "s", "", "Sender email address")
-	if err := viper.BindPFlag("email.sender", sendEmailCmd.Flags().Lookup("sender")); err != nil {
-		logger.Error("Failed to bind flag 'sender': %v", err)
-		os.Exit(1)
-	}
+	sendEmailCmd.Flags().StringVarP(&senderFlag, "sender", "s", "", "Sender email address")
+	sendEmailCmd.Flags().StringVarP(&envFlag, "env", "e", "", "Environment (dev, staging, prod)")
 
-	sendEmailCmd.Flags().StringP("env", "e", "", "Environment (dev, staging, prod)")
-	if err := viper.BindPFlag("env", sendEmailCmd.Flags().Lookup("env")); err != nil {
-		logger.Error("Failed to bind flag 'env': %v", err)
-		os.Exit(1)
-	}
+	sendEmailCmd.Flags().StringVarP(&testEmailFlag, "test-email", "", "", "Test email address (if set, all emails go here instead of to clubs)")
 
-	sendEmailCmd.Flags().String("test-email", "", "Test email address (if set, all emails go here instead of to clubs)")
-	if err := viper.BindPFlag("email.test", sendEmailCmd.Flags().Lookup("test-email")); err != nil {
-		logger.Error("Failed to bind flag 'test-email': %v", err)
-		os.Exit(1)
-	}
-
-	sendEmailCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose debugging output")
+	sendEmailCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Enable verbose debugging output")
 }

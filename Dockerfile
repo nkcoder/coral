@@ -34,9 +34,7 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /app/email-app .
 
-# Copy configuration files (if needed)
-COPY config.yaml ./
-COPY config.*.yaml ./
+COPY data/ ./data/
 
 # Create data directory
 RUN mkdir -p /app/data && chown -R appuser:appuser /app

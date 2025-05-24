@@ -4,6 +4,7 @@ version: '3'
 
 vars:
   ENV: dev
+  AWS_PROFILE: dev
   TEST_EMAIL: daniel.guo@vivalabs.com.au
   SENDER: no-reply@the-hub.ai
   PIF_INPUT: data/pif_club_transfer.csv
@@ -11,15 +12,15 @@ vars:
 
 tasks:
   # Build tasks
-  build:
+  build:linux:
     desc: Build for Linux
     cmds:
-      - GOOS=linux GOARCH=amd64 go build -o email-app-linux .
+      - GOOS=linux GOARCH=arm64 go build -o email-app .
 
-  build:windows:
-    desc: Build for Windows
+  build:mac:
+    desc: Build for Mac
     cmds:
-      - GOOS=windows GOARCH=amd64 go build -o email-app.exe .
+      - GOOS=darwin GOARCH=arm64 go build -o email-app .
 
   # Testing tasks
   test:
@@ -93,21 +94,30 @@ tasks:
   docker:build:
     desc: Build Docker image
     cmds:
-      - docker build -t club-transfer-app .
+      - docker build -t club-transfer-app:1.0.0 .
 
   docker:test:
     desc: Run tests in Docker
     cmds:
       - docker run --rm -v $(PWD):/app -w /app golang:1.24 sh -c "go mod download && go test -v ./..."
 
-  # CI/CD tasks
-  ci:test:
-    desc: Run all CI checks
-    deps: [deps]
+  docker:send-email-pif:
+    desc: Send PIF emails using docker-compose
+    deps:
+      - docker:build
     cmds:
-      - task: test:race
-      - task: test:coverage
-      - task: lint
+      - export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile {{.AWS_PROFILE}}) 
+      - export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile {{.AWS_PROFILE}}) 
+      - docker-compose run --rm app send-email -e {{.ENV}} -t PIF -i {{.PIF_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
+
+  docker:send-email-dd:
+    desc: Send DD emails using docker-compose
+    deps:
+      - docker:build
+    cmds:
+      - export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile {{.AWS_PROFILE}}) 
+      - export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile {{.AWS_PROFILE}}) 
+      - docker-compose run --rm app send-email -e {{.ENV}} -t DD -i {{.DD_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
 
   # Install development tools
   install:tools:
@@ -119,7 +129,7 @@ tasks:
   send-email-pif:
     desc: Send PIF club transfer emails
     deps:
-      - build
+      - build:mac
     cmds:
       - ./email-app send-email -e {{.ENV}} -t PIF -i {{.PIF_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
     silent: false
@@ -127,7 +137,7 @@ tasks:
   send-email-dd:
     desc: Send DD club transfer emails
     deps:
-      - build
+      - build:mac
     cmds:
       - ./email-app send-email -e {{.ENV}} -t DD -i {{.DD_INPUT}} -s {{.SENDER}} --test-email {{.TEST_EMAIL}} -v
     silent: false
